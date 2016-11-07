@@ -28,7 +28,7 @@ import weka.filters.supervised.attribute.TSLagMaker;
  * jcommon-1.0.14.jar (from the time series package lib directory)
  * jfreechart-1.0.13.jar (from the time series package lib directory)
  */
-public class PrediccionRTLag {
+public class PrediccionSMORegLag {
 
     public static void main(String[] args) {
         try {
@@ -38,8 +38,8 @@ public class PrediccionRTLag {
             int max_lag = 24;
             double[][] errores_acumulados = new double[max_lag][links_num];
 
-            for (int lag = 24; lag <= max_lag; lag++) {
-                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosRTlag" + (lag) + ".txt");
+            for (int lag = 17; lag <= max_lag; lag++) {
+                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosSMOReglag" + (lag) + ".txt");
                 for (int j = 0; j < links_num; j++) {
                     // rutas de los datos
                     String pathToData = "C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/datosWeka/link" + j + ".arff";
@@ -56,7 +56,7 @@ public class PrediccionRTLag {
                     forecaster.setFieldsToForecast("Link" + j);
 
 
-                    forecaster.setBaseForecaster(new REPTree());
+                    forecaster.setBaseForecaster(new SMOreg());
 
 
                     forecaster.getTSLagMaker().setTimeStampField("timestamp"); // date time stamp
