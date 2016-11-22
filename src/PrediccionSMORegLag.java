@@ -38,7 +38,7 @@ public class PrediccionSMORegLag {
             int max_lag = 24;
             double[][] errores_acumulados = new double[max_lag][links_num];
 
-            for (int lag = 17; lag <= max_lag; lag++) {
+            for (int lag = 1; lag <= max_lag; lag++) {
                 PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosSMOReglag" + (lag) + ".txt");
                 for (int j = 0; j < links_num; j++) {
                     // rutas de los datos

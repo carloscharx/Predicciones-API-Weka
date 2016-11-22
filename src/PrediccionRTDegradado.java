@@ -28,25 +28,24 @@ import weka.filters.supervised.attribute.TSLagMaker;
  * jcommon-1.0.14.jar (from the time series package lib directory)
  * jfreechart-1.0.13.jar (from the time series package lib directory)
  */
-public class PrediccionRTLag {
+public class PrediccionRTDegradado {
 
     public static void main(String[] args) {
         try {
             int links_num = 979; // Número de enlaces final obtenido
-            // Los algortimos que vamos a usar:
-            String[] algoritmos = {"REPTRee", "SMOreg", "IBk", "GaussianProcesses"};
-            int max_lag = 24;
-            double[][] errores_acumulados = new double[max_lag][links_num];
+            int mediodia = 144;
+            int num_tests = 12;
+            double[][] errores_acumulados = new double[num_tests][links_num];
 
-            for (int lag = 1; lag <= max_lag; lag++) {
-                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosRTlag" + (lag) + ".txt");
+            for (int test = 0; test < num_tests; test++) {
+                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosRTdegradado" + (test+1) + ".txt");
                 for (int j = 0; j < links_num; j++) {
                     // rutas de los datos
                     String pathToData = "C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/datosWeka/link" + j + ".arff";
 
                     // se cargan los datos de entrenamiento y test
                     Instances data_set = new Instances(new BufferedReader(new FileReader(pathToData)));
-                    Instances training_set = new Instances(data_set, 0, 1728);
+                    Instances training_set = new Instances(data_set, 0, 288);
 
 
                     // Se crea un nuevo predictor
@@ -61,18 +60,18 @@ public class PrediccionRTLag {
 
                     forecaster.getTSLagMaker().setTimeStampField("timestamp"); // date time stamp
                     forecaster.getTSLagMaker().setMinLag(1);
-                    forecaster.getTSLagMaker().setMaxLag(lag);
+                    forecaster.getTSLagMaker().setMaxLag(12);
 
                     // Contruye el modelo
                     forecaster.buildForecaster(training_set, System.out);
 
-                    double[] error_enlace = new double[288];
-                    for (int k = 0; k < 288; k++) {
+                    double[] error_enlace = new double[144+mediodia*test];
+                    for (int k = 0; k < 144+mediodia*test; k++) {
                         // prime the forecaster with enough recent historical data
                         // to cover up to the maximum lag. In our case, we could just supply
                         // the 12 most recent historical instances, as this covers our maximum
                         // lag period
-                        forecaster.primeForecaster(new Instances(data_set, 1728 - lag + k, lag));
+                        forecaster.primeForecaster(new Instances(data_set, 276 +k, 12));
                         // Predice 1 unidad desde el fin del conjunto de datos con los que ha alimentado al predictor
                         List<List<NumericPrediction>> forecast = forecaster.forecast(1, System.out);
 
@@ -107,7 +106,7 @@ public class PrediccionRTLag {
                         MAEModule calculoMae = new MAEModule();
                         calculoMae.setTargetFields(fields);
                         List<NumericPrediction> predsAtStep = forecast.get(0);
-                        calculoMae.evaluateForInstance(predsAtStep, data_set.get(1728 + k));
+                        calculoMae.evaluateForInstance(predsAtStep, data_set.get(276 + k));
                         error = calculoMae.calculateMeasure();
                         error_enlace[k] = error[0];
 
@@ -115,21 +114,21 @@ public class PrediccionRTLag {
 
 
                     double mae = 0;
-                    for (int k = 0; k < 288; k++) {
+                    for (int k = 0; k < 144+test*mediodia; k++) {
                         mae += error_enlace[k];
                     }
-                    mae = mae / 288;
+                    mae = mae / (144+test*mediodia);
                     System.out.println("La MAE es " + mae);
-                    errores_acumulados[lag-1][j] = mae;
+                    errores_acumulados[test][j] = mae;
 
                     double sum = 0.0;
                     for (int k = 0; k <= j; k++) {
-                        sum += errores_acumulados[lag-1][k];
+                        sum += errores_acumulados[test][k];
                     }
                     sum = sum / (j + 1);
                     System.out.println(sum);
                     System.out.println("Fin de la iteración número " + (j + 1));
-                    writer.println(errores_acumulados[lag-1][j]);
+                    writer.println(errores_acumulados[test][j]);
                 }
                 writer.close();
             }
