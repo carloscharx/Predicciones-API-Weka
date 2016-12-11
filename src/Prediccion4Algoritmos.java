@@ -5,6 +5,7 @@ import java.util.List;
 
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.lazy.IBk;
+import weka.classifiers.trees.M5P;
 import weka.core.EuclideanDistance;
 import weka.core.ManhattanDistance;
 import weka.classifiers.trees.REPTree;
@@ -34,7 +35,7 @@ public class Prediccion4Algoritmos {
         try {
             int links_num = 979; // Número de enlaces final obtenido
             // Los algortimos que vamos a usar:
-            String[] algoritmos= {"REPTRee", "SMOreg", "IBk", "GaussianProcesses"};
+            String[] algoritmos= {"M5Pdef", "SMOreg", "IBk", "GaussianProcesses"};
             int algorithms_num = 4;
             double[][] errores_acumulados = new double[algorithms_num][links_num];
             for(int i = 0;i<algorithms_num;i++) {
@@ -57,8 +58,10 @@ public class Prediccion4Algoritmos {
                     // Elegimos el algoritmo para cada una de las iteraciones
                     switch (i){
                         case 0:
-                        {
-                            forecaster.setBaseForecaster(new REPTree());
+                        {   //String[] opciones={"-R"};
+                            REPTree predictor = new REPTree();
+                            //predictor.setOptions(opciones);
+                            forecaster.setBaseForecaster(predictor);
                             break;
                         }
                         case 1:
@@ -107,7 +110,7 @@ public class Prediccion4Algoritmos {
                         // lag period
                         forecaster.primeForecaster(new Instances(data_set,1716+k,12));
                         // Predice 1 unidad desde el fin del conjunto de datos con los que ha alimentado al predictor
-                        List<List<NumericPrediction>> forecast = forecaster.forecast(1, System.out);
+                        List<List<NumericPrediction>> forecast = forecaster.forecast(10, System.out);
 
                         // Aquí hay que saturar los valores, descomentar cuando se use e intentar reducir codigo
 
@@ -124,15 +127,15 @@ public class Prediccion4Algoritmos {
 
                         // Ahora se imprimen, descomentar si fuese necesario
 
-                        /*for (int i = 0; i < 288; i++) {
-                            List<NumericPrediction> predsAtStep = forecast.get(i);
-                                for (int j = 0; j < 1; j++) {
-                            NumericPrediction predForTarget = predsAtStep.get(j);
+                        /*for (int u = 0; u < 10; u++) {
+                            List<NumericPrediction> predsAtStep = forecast.get(u);
+                                for (int w = 0; w < 1; w++) {
+                            NumericPrediction predForTarget = predsAtStep.get(w);
                             System.out.print("" + predForTarget.predicted() + " ");
                             }
                         System.out.println();
-                        }*/
-
+                        }
+*/
                         double[] error;
 
                         List<String> fields = new ArrayList();

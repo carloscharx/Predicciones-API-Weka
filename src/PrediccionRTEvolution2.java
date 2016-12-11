@@ -5,6 +5,7 @@ import java.util.List;
 
 import weka.classifiers.functions.SMOreg;
 import weka.classifiers.lazy.IBk;
+import weka.classifiers.trees.M5P;
 import weka.core.EuclideanDistance;
 import weka.core.ManhattanDistance;
 import weka.classifiers.trees.REPTree;
@@ -53,7 +54,10 @@ public class PrediccionRTEvolution2 {
                 forecaster.setFieldsToForecast("Link" + j);
 
 
-                forecaster.setBaseForecaster(new REPTree());
+                //String[] opciones={"-R"};
+                REPTree predictor = new REPTree();
+                //predictor.setOptions(opciones);
+                forecaster.setBaseForecaster(predictor);
 
 
                 forecaster.getTSLagMaker().setTimeStampField("timestamp"); // date time stamp
