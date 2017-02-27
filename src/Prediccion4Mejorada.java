@@ -1,24 +1,23 @@
-import java.io.*;
+import weka.classifiers.evaluation.NumericPrediction;
+import weka.classifiers.functions.GaussianProcesses;
+import weka.classifiers.functions.SMOreg;
+import weka.classifiers.lazy.IBk;
+import weka.classifiers.timeseries.WekaForecaster;
+import weka.classifiers.timeseries.eval.MAEModule;
+import weka.classifiers.trees.REPTree;
+import weka.core.Instances;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-import weka.classifiers.functions.SMOreg;
-import weka.classifiers.lazy.IBk;
-import weka.classifiers.trees.M5P;
-import weka.core.EuclideanDistance;
-import weka.core.ManhattanDistance;
-import weka.classifiers.trees.REPTree;
-import weka.classifiers.trees.RandomTree;
-import weka.core.Instances;
-import weka.classifiers.functions.GaussianProcesses;
-import weka.classifiers.evaluation.NumericPrediction;
-import weka.classifiers.timeseries.WekaForecaster;
-import weka.classifiers.timeseries.eval.MAEModule;
-//import weka.classifiers.timeseries.core.TSLagMaker; esto parece que ya no existe, existe esto:
-import weka.core.MinkowskiDistance;
-import weka.core.neighboursearch.LinearNNSearch;
-import weka.filters.supervised.attribute.TSLagMaker;
+
+
+/**
+ * Created by carloscharx on 01/02/2017.
+ */
 
 /**
  * Example of using the time series forecasting API. To compile and
@@ -29,17 +28,17 @@ import weka.filters.supervised.attribute.TSLagMaker;
  * jcommon-1.0.14.jar (from the time series package lib directory)
  * jfreechart-1.0.13.jar (from the time series package lib directory)
  */
-public class Prediccion4Algoritmos {
+public class Prediccion4Mejorada {
 
     public static void main(String[] args) {
         try {
             int links_num = 979; // Número de enlaces final obtenido
             // Los algortimos que vamos a usar:
-            String[] algoritmos= {"M5Pdef", "SMOreg", "IBk", "GaussianProcesses"};
+            String[] algoritmos= {"RT", "SMOreg", "IBk", "GaussianProcesses"};
             int algorithms_num = 4;
             double[][] errores_acumulados = new double[algorithms_num][links_num];
             for(int i = 0;i<algorithms_num;i++) {
-                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultados" + algoritmos[i] + ".txt");
+                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosMejorados" + algoritmos[i] + ".txt");
                 for (int j = 0; j < links_num; j++) {
                     // rutas de los datos
                     String pathToData = "C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/datosWeka/link" + j + ".arff";
@@ -98,9 +97,12 @@ public class Prediccion4Algoritmos {
                     forecaster.getTSLagMaker().setTimeStampField("timestamp"); // date time stamp
                     forecaster.getTSLagMaker().setMinLag(1);
                     forecaster.getTSLagMaker().setMaxLag(12);
+                    forecaster.getTSLagMaker().setIncludePowersOfTime(false);
+                    forecaster.getTSLagMaker().setIncludeTimeLagProducts(false);
 
                     // Contruye el modelo
                     forecaster.buildForecaster(training_set, System.out);
+
 
                     double[] error_enlace = new double[288];
                     for(int k=0;k<288;k++){
