@@ -1,3 +1,4 @@
+import moa.core.TimingUtils;
 import weka.classifiers.evaluation.NumericPrediction;
 import weka.classifiers.functions.GaussianProcesses;
 import weka.classifiers.functions.SMOreg;
@@ -31,21 +32,35 @@ import java.util.List;
 public class Prediccion4Mejorada {
 
     public static void main(String[] args) {
+
         try {
-            int links_num = 979; // Número de enlaces final obtenido
+            //int links_num = 979; // Número de enlaces final obtenido
+            //int links_num = 610; // Número de enlaces final obtenido
+            int links_num = 325; // Número de enlaces final obtenido
+
             // Los algortimos que vamos a usar:
             String[] algoritmos= {"RT", "SMOreg", "IBk", "GaussianProcesses"};
             int algorithms_num = 4;
+            int training =288;
+            int test = 1728;
             double[][] errores_acumulados = new double[algorithms_num][links_num];
+            PrintWriter tiempos = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultados1diaSiTimestampconPotenciasTiemposMAE" +".txt");
             for(int i = 0;i<algorithms_num;i++) {
-                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultadosMejorados" + algoritmos[i] + ".txt");
+                PrintWriter writer = new PrintWriter("C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/resultados1diaSiTimestampconPotencias" + algoritmos[i] + ".txt");
+
+                boolean preciseCPUTiming = TimingUtils.enablePreciseTiming();
+                long evaluateStartTime = TimingUtils.getNanoCPUTimeOfCurrentThread();
+
+                double sum = 0.0;
+
+
                 for (int j = 0; j < links_num; j++) {
                     // rutas de los datos
-                    String pathToData = "C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/datosWeka/link" + j + ".arff";
+                    String pathToData = "C:/Users/carloscharx/Documentos/Teleco/4º Teleco/Prácticas y TFG/datos-Funkfeuer-CONFINE/datosWeka1hora/link" + j + ".arff";
 
                     // se cargan los datos de entrenamiento y test
                     Instances data_set = new Instances(new BufferedReader(new FileReader(pathToData)));
-                    Instances training_set = new Instances(data_set,0,1728);
+                    Instances training_set = new Instances(data_set,0,training);
 
 
                     // Se crea un nuevo predictor
@@ -97,26 +112,28 @@ public class Prediccion4Mejorada {
                     forecaster.getTSLagMaker().setTimeStampField("timestamp"); // date time stamp
                     forecaster.getTSLagMaker().setMinLag(1);
                     forecaster.getTSLagMaker().setMaxLag(12);
-                    forecaster.getTSLagMaker().setIncludePowersOfTime(false);
-                    forecaster.getTSLagMaker().setIncludeTimeLagProducts(false);
+                    //forecaster.getTSLagMaker().setAdjustForTrends(false); //no timestamp
+                    forecaster.getTSLagMaker().setIncludePowersOfTime(true);
+                    forecaster.getTSLagMaker().setIncludeTimeLagProducts(true);
 
                     // Contruye el modelo
                     forecaster.buildForecaster(training_set, System.out);
+                    //System.out.println(forecaster.toString());
 
 
-                    double[] error_enlace = new double[288];
-                    for(int k=0;k<288;k++){
+                    double[] error_enlace = new double[test];
+                    for(int k=0;k<test;k++){
                         // prime the forecaster with enough recent historical data
                         // to cover up to the maximum lag. In our case, we could just supply
                         // the 12 most recent historical instances, as this covers our maximum
                         // lag period
-                        forecaster.primeForecaster(new Instances(data_set,1716+k,12));
+                        forecaster.primeForecaster(new Instances(data_set,training-12+k,12));
                         // Predice 1 unidad desde el fin del conjunto de datos con los que ha alimentado al predictor
                         List<List<NumericPrediction>> forecast = forecaster.forecast(1, System.out);
 
                         // Aquí hay que saturar los valores, descomentar cuando se use e intentar reducir codigo
 
-                        /*for (List<NumericPrediction> predAtStep : forecast) {
+                        for (List<NumericPrediction> predAtStep : forecast) {
                             for (NumericPrediction predForTarget : predAtStep) {
                                 if (predForTarget.predicted() > 1.0) {
                                     predAtStep.set(predAtStep.indexOf(predForTarget), new NumericPrediction(predForTarget.actual(), new Double(1)));
@@ -125,7 +142,7 @@ public class Prediccion4Mejorada {
                                 }
                             }
                             forecast.set(forecast.indexOf(predAtStep), predAtStep);
-                        }*/
+                        }
 
                         // Ahora se imprimen, descomentar si fuese necesario
 
@@ -145,7 +162,7 @@ public class Prediccion4Mejorada {
                         MAEModule calculoMae = new MAEModule();
                         calculoMae.setTargetFields(fields);
                         List<NumericPrediction> predsAtStep = forecast.get(0);
-                        calculoMae.evaluateForInstance(predsAtStep, data_set.get(1728+k));
+                        calculoMae.evaluateForInstance(predsAtStep, data_set.get(training+k));
                         error = calculoMae.calculateMeasure();
                         error_enlace[k]=error[0];
 
@@ -154,25 +171,31 @@ public class Prediccion4Mejorada {
 
 
                     double mae=0;
-                    for(int k=0;k<288;k++){
+                    for(int k=0;k<test;k++){
                         mae+=error_enlace[k];
                     }
-                    mae=mae/288;
-                    System.out.println("La MAE es " + mae);
+                    mae=mae/test;
+                    //System.out.println("La MAE es " + mae);
                     errores_acumulados[i][j]=mae;
 
-                    double sum = 0.0;
+                    sum = 0.0;
                     for (int k = 0; k <= j; k++) {
                         sum += errores_acumulados[i][k];
                     }
                     sum = sum / (j + 1);
-                    System.out.println(sum);
-                    System.out.println("Fin de la iteración número " + (j + 1));
+                    //System.out.println(sum);
+                    //System.out.println("Fin de la iteración número " + (j + 1));
                     writer.println(errores_acumulados[i][j]);
                 }
+                System.out.println(sum);
+                double time = TimingUtils.nanoTimeToSeconds(TimingUtils.getNanoCPUTimeOfCurrentThread()- evaluateStartTime);
+                System.out.println(time);
+                tiempos.print(time);
+                tiempos.print(" ");
+                tiempos.println(sum);
                 writer.close();
             }
-
+            tiempos.close();
 
         } catch (Exception ex) {
             ex.printStackTrace();
